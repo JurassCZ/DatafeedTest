@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Datafeeds.DBModel
+namespace Datafeeds.Processor
 {
-    // Some POJO
-    class SomeDBModel
+    public interface IProcessor
     {
-        // Tady by byla trida CTSTestApplication.Trade 
+        void Process();
     }
 }

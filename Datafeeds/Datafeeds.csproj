@@ -35,9 +35,20 @@
     <Reference Include="CTSTestApplication">
       <HintPath>.\CTSTestApplication.dll</HintPath>
     </Reference>
+    <Reference Include="NDesk.Options, Version=0.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NDesk.Options.0.2.1\lib\NDesk.Options.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Console, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Console.4.0.0\lib\net46\System.Console.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Reflection.TypeExtensions, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Reflection.TypeExtensions.4.1.0\lib\net46\System.Reflection.TypeExtensions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -46,10 +57,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Properties\LoggerSetting.cs" />
+    <Compile Include="LoggerSetting.cs" />
     <Compile Include="ORM\SomeDBModel.cs" />
     <Compile Include="Mapper\AbstractMapper.cs" />
     <Compile Include="Processor\AbstractProcessor.cs" />
+    <Compile Include="Processor\IProcessor.cs" />
+    <Compile Include="Util\ThreadQueue.cs" />
     <Compile Include="Properties\Resource1.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -57,16 +70,20 @@
     </Compile>
     <Compile Include="Mapper\TradeMapper.cs" />
     <Compile Include="Processor\TradeProcessor.cs" />
-    <Compile Include="XSD\XMLDeserializer.cs" />
+    <Compile Include="Util\XMLDeserializer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="XSD\XMLPartializer.cs" />
+    <Compile Include="Util\XMLPartializer.cs" />
+    <Compile Include="Util\XMLSaver.cs" />
     <Compile Include="XSD\TradesList.cs">
       <DependentUpon>TradesList.xsd</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="XSD\TradesList.xsd">
       <SubType>Designer</SubType>
     </None>

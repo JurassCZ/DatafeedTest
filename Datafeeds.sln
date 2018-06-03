@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Datafeeds", "Datafeeds\Datafeeds.csproj", "{893B5486-DFD6-412A-A69A-3F8B84459519}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatafeedsTests", "DatafeedsTests\DatafeedsTests.csproj", "{35AB833C-8C2B-4340-9B6F-D4754A85842B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{893B5486-DFD6-412A-A69A-3F8B84459519}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{893B5486-DFD6-412A-A69A-3F8B84459519}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{893B5486-DFD6-412A-A69A-3F8B84459519}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35AB833C-8C2B-4340-9B6F-D4754A85842B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35AB833C-8C2B-4340-9B6F-D4754A85842B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35AB833C-8C2B-4340-9B6F-D4754A85842B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35AB833C-8C2B-4340-9B6F-D4754A85842B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

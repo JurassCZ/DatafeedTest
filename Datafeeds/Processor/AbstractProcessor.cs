@@ -1,20 +1,27 @@
 ﻿using CTSTestApplication;
 using Datafeeds.Mapper;
+using Datafeeds.Util;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 
 namespace Datafeeds.Processor
 {
-    public abstract class AbstractProcessor<ORModel, XmlModel, XmlModelContainer, MappingClass> where MappingClass : Mapper<ORModel, XmlModel>
+    /// <summary>
+    /// Lazy deserialize some XML on the disc into the Database.
+    /// </summary>
+    /// <typeparam name="ORModel">ORM model class</typeparam>
+    /// <typeparam name="XmlModel">XML model class of the output objects</typeparam>
+    /// <typeparam name="XmlModelContainer">XML model class which acts as container for deserialized objects</typeparam>
+    /// <typeparam name="MappingClass">Class mapping XML model into ORM model</typeparam>
+    public abstract class AbstractProcessor<ORModel, XmlModel, XmlModelContainer, MappingClass> : IProcessor 
+        where MappingClass : Mapper<ORModel, XmlModel>
     {
-        public int BATCH_SIZE = 100;
+        private const int DEFAULT_BATCH_SIZE = 100000;
 
-        protected string directoryPath;
+        protected string filePath;
         protected string dbConnection;
+        protected int batchSize;
 
         protected string TRANSACTION_NAME = "AbstractProcessor";
 
@@ -23,61 +30,107 @@ namespace Datafeeds.Processor
         protected XmlDeserializator<XmlModelContainer> xmlDeserializer = new XmlDeserializator<XmlModelContainer>();
         protected MappingClass mapper = (MappingClass)Activator.CreateInstance(typeof(MappingClass));
         protected DataAdapter dataAdapter;
+        protected XMLSaver xMLSaver;
 
-
-
-        public AbstractProcessor(string directoryPath, string dbConnection)
+        public AbstractProcessor(string filePath, string dbConnection) : this(filePath, dbConnection, DEFAULT_BATCH_SIZE)
         {
-            this.directoryPath = directoryPath;
+
+        }
+  
+        public AbstractProcessor(string filePath, string dbConnection, int batchSize)
+        {
+            this.filePath = filePath;
             this.dbConnection = dbConnection;
-       
-            this.xmlPartitioner = new XmlPartitioner(directoryPath, BATCH_SIZE);
+            this.batchSize = batchSize;
+
+            this.xmlPartitioner = new XmlPartitioner(filePath, batchSize);
             this.dataAdapter = new DataAdapter(dbConnection);
-        }
-        public AbstractProcessor(string directoryPath, string dbConnection, int batchSize) : this(directoryPath, dbConnection)
-        {
-            this.BATCH_SIZE = batchSize;
+            this.xMLSaver = new XMLSaver(AppDomain.CurrentDomain.BaseDirectory, TRANSACTION_NAME + ".xml");
         }
 
-        protected abstract XmlModel[] extractList(XmlModelContainer container);
         /// <summary>
-        /// Transofrm xml file in given location into database
+        /// Transofrm xml file into database
         /// </summary>
         public void Process()
         {
-            ORModel[] oRModels = new ORModel[BATCH_SIZE];
             try
             {
-                dataAdapter.BeginTransaction(TRANSACTION_NAME);
-
-                // Obtain XML piece by piece
+                // Split potencionally large XML file into smaller XMLs
                 foreach (var xmlPart in xmlPartitioner.GetPartializedXML())
                 {
-                    // Deserialize XML part into real objects, classes are pre-generated from XSD file
-                    XmlModelContainer xmlModelsContainer = xmlDeserializer.deserialize(xmlPart.ToString());
+                   Trace.TraceInformation("Input XML splited:" + xMLSaver.save(xmlPart.ToString()) );
+                }
 
-                    // Extract objects jailed in root container
+
+                ORModel[] oRModels = new ORModel[batchSize];
+
+                // For each created XML file
+                int count = 0;
+                foreach (var xmlFilePath in xMLSaver.FilePaths)
+                {
+                    // 1. Deserialize XML file into real objects
+                    XmlModelContainer xmlModelsContainer = xmlDeserializer.deserializeFile(xmlFilePath);
+
+                    // 2. Extract objects jailed in root container
                     XmlModel[] xmlModels = extractList(xmlModelsContainer);
 
-                    // Map objects into ORM objects
-                    if (xmlModels.Length < oRModels.Length) // make buffer smaller (in case of the last xml part)
+                    // 3. Map objects into ORM objects
+                    if (xmlModels.Length != oRModels.Length) // resize if neccessary
                         Array.Resize(ref oRModels, xmlModels.Length);
                     for (int i = 0; i<xmlModels.Length; i++)
                     {
                         oRModels[i] = mapper.map(xmlModels[i]);
                     }
-              
-                    // Write ORM objects to database
-                    dataAdapter.Process(Operation.Insert, "someCommand", oRModels);
+
+                    // 4. Write ORM objects to database
+                    insertToDatabase(oRModels);
+
+                    // 5. Delete processed XML 
+                    File.Delete(xmlFilePath);
+
+                    Trace.TraceInformation("Processed batch num.:" + count++ + "\t Batch size:" + oRModels.LongLength);
                 }
 
-                dataAdapter.CommitTransaction(TRANSACTION_NAME);
             }
             catch (Exception e)
             {
-                dataAdapter.RollbackTransaction(TRANSACTION_NAME);
                 Trace.WriteLine(e);
             }
         }
+
+        protected abstract XmlModel[] extractList(XmlModelContainer container);
+
+        private void insertToDatabase(ORModel[] oRModels)
+        {
+            const int MAX_ATTEMPTS = 10;
+            for(int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++)
+            {
+                try
+                {
+                    Trace.TraceInformation("Inserting batch into DB. Attemt num.:" + attempt);
+                    dataAdapter.BeginTransaction(TRANSACTION_NAME);
+
+                    dataAdapter.Process(Operation.Insert, "someCommand", oRModels);
+                    
+                    dataAdapter.CommitTransaction(TRANSACTION_NAME);
+
+                    return;
+                }
+                catch (Exception e)
+                {
+                    if (attempt < MAX_ATTEMPTS)
+                    {
+                        Trace.TraceInformation("Inserting failed.");
+                        Trace.TraceError(e.ToString());
+                        dataAdapter.RollbackTransaction(TRANSACTION_NAME);
+                    }
+                    else
+                    {
+                        throw new Exception("Insert to DB not succesful. Total attempts: " + attempt);
+                    }
+                }
+            }
+        }
+            
     }
 }

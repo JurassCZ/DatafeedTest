@@ -11,9 +11,12 @@ namespace Datafeeds.Processor
 {
     public class TradeProcessor : AbstractProcessor<Trade,TradesListTrade,TradesList,TradeMapper>
     {
-        public TradeProcessor(string directoryPath, string dbConnection) : base(directoryPath, dbConnection)
+        protected string TRANSACTION_NAME = "TradeProcessor";
+
+
+        public TradeProcessor(string filePath, string dbConnection, int batchSize) : base(filePath, dbConnection, batchSize)
         {
-            base.TRANSACTION_NAME = "TradeProcessor";
+
         }
 
         protected override TradesListTrade[] extractList(TradesList container)
